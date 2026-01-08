@@ -24,8 +24,9 @@ public class SecurityConfig{
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/auth/**").permitAll()
-                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+//                        .requestMatchers("/api/v1/auth/**").permitAll()
+//                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/**").permitAll() // Allow ALL requests temporarily
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

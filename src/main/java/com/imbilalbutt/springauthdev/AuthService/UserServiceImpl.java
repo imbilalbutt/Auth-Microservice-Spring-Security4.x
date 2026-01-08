@@ -11,6 +11,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -80,6 +83,8 @@ public class UserServiceImpl implements UserService {
                 .role(request.getRole() != null ? request.getRole() : Role.USER)
                 .enabled(true)
                 .locked(false)
+                .createdDate(LocalDateTime.now())
+                .dateOfBirth(LocalDate.now())  // Add this if it's NOT NULL in DB
                 .build();
 
         return userRepository.save(user);

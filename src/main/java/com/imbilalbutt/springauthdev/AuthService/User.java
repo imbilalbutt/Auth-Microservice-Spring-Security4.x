@@ -44,7 +44,6 @@ public class User implements UserDetails, Principal {
     @Column(unique = true)
     private String email;
     private String password;
-    private boolean accountLocked;
     private boolean enabled;
 
     private boolean locked;
@@ -83,7 +82,7 @@ public class User implements UserDetails, Principal {
 
     @Override
     public boolean isAccountNonLocked() {
-        return !accountLocked;
+        return !locked;
     }
 
     @Override

@@ -15,7 +15,7 @@ Content-Type: application/json
   "lastname": "Doe",
   "email": "john@example.com",
   "password": "password123",
-  "role": "USER"
+  "role": "ADMIN"
 }
 
 ###
