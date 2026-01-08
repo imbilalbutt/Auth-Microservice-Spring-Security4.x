@@ -1,7 +1,8 @@
 # Authenticate
-curl -X POST http://localhost:8080/api/v1/auth/authenticate \
-  -H "Content-Type: application/json" \
-  -d '{
+POST http://localhost:8081/api/v1/auth/authenticate
+Content-Type: application/json
+
+{
     "email": "john@example.com",
     "password": "password123"
-  }'
+}
