@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Spring Auth</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .auth-container {
+            max-width: 400px;
+            margin: 100px auto;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .auth-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .social-login {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="auth-container">
+        <div class="auth-header">
+            <h2><i class="fas fa-sign-in-alt"></i> Welcome Back</h2>
+            <p class="text-muted">Sign in to your account</p>
+        </div>
+
+        <!-- Flash Messages -->
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show">
+            <span th:text="${successMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show">
+            <span th:text="${errorMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <!-- Login Form -->
+        <form th:action="@{/ui/login}" th:object="${authRequest}" method="post">
+            <div class="mb-3">
+                <label for="email" class="form-label">Email Address</label>
+                <input type="email" class="form-control" id="email"
+                       th:field="*{email}" required>
+                <div th:if="${#fields.hasErrors('email')}" class="text-danger">
+                    <small th:errors="*{email}"></small>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" class="form-control" id="password"
+                       th:field="*{password}" required>
+                <div th:if="${#fields.hasErrors('password')}" class="text-danger">
+                    <small th:errors="*{password}"></small>
+                </div>
+            </div>
+
+            <div class="mb-3 d-flex justify-content-between">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="rememberMe">
+                    <label class="form-check-label" for="rememberMe">
+                        Remember me
+                    </label>
+                </div>
+                <a href="#" class="text-decoration-none">Forgot password?</a>
+            </div>
+
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-sign-in-alt"></i> Sign In
+                </button>
+            </div>
+        </form>
+
+        <!-- Social Login (Optional) -->
+        <div class="text-center mt-4">
+            <p class="text-muted">Or sign in with</p>
+            <div class="social-login justify-content-center">
+                <button class="btn btn-outline-primary">
+                    <i class="fab fa-google"></i> Google
+                </button>
+                <button class="btn btn-outline-dark">
+                    <i class="fab fa-github"></i> GitHub
+                </button>
+            </div>
+        </div>
+
+        <div class="text-center mt-4">
+            <p>Don't have an account?
+                <a th:href="@{/ui/register}" class="text-decoration-none">Sign Up</a>
+            </p>
+            <p>
+                <a th:href="@{/ui/}" class="text-decoration-none">
+                    <i class="fas fa-home"></i> Back to Home
+                </a>
+            </p>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
+</body>
+</html>
