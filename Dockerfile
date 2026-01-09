@@ -17,7 +17,7 @@ COPY src ./src
 
 # We tell maven we want to create a new package from our Spring boot app
 # It creates single jar file
-RUN mvn clean package
+RUN mvn clean package -DskipTests
 
 
 
@@ -30,10 +30,10 @@ FROM eclipse-temurin:17-jdk-alpine AS runner
 
 WORKDIR /app
 
-COPY --from=builder ./app/target/spring-auth-dev.jar ./app.jar
+COPY --from=builder ./app/target/spring-auth-dev-1.0.0.jar ./app.jar
 
-# We set 4000 in our application.properties
-EXPOSE 4005
+# We set server.port = 8081 in our application.properties
+EXPOSE 8081
 
 #ENTRYPOINT ["java" , "-jar", "app.jar"]
 ENTRYPOINT ["java", "-jar", "app.jar"]

@@ -1,9 +1,9 @@
 
 
 services:
-  book_social_network:
+  db:
     image: postgres:9.3
-    container_name: book_social_network
+    container_name: auth-db-service
     restart: always
 
     #    Environment variables
@@ -16,7 +16,7 @@ services:
 
     ports:
       #      - host port (my laptop) : container port
-      - "5433:5433"
+      - "5433:5432"
 
     networks:
       - internal
@@ -26,7 +26,22 @@ services:
       timeout: 5s
       retries: 5
 
-  auth-service:
+  # Redis for sessions (if using Redis)
+  redis-service:
+    image: redis:7-alpine
+    container_name: auth-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - internal
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
     #    image:  # Use pre-built image, comment out build command if you want to use this line
     build:
       context: .
@@ -37,7 +52,7 @@ services:
       - "8081:8081" # host:docker_container -> map docker_container port to localhost port
     #   TODO: Remove both port binding when integrating API gateway such that client cannot access it directly.
     depends_on:
-      auth-db-service:
+      db:
         condition: service_healthy
     environment:
       #      db ---> is actually container name
@@ -46,13 +61,24 @@ services:
       #      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/db
 
       #      each service can reach others by their service name
-      SPRING_DATASOURCE_URL: jdbc:postgresql://auth-db-service:5433/book_social_network
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/db
       SPRING_DATASOURCE_USERNAME: admin_user
       SPRING_DATASOURCE_PASSWORD: password
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: "false"
+      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.PostgreSQLDialect
+
+      # Redis configuration
+      SPRING_DATA_REDIS_HOST: redis-service
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_SESSION_STORE_TYPE: redis
+
+
       SPRING_SQL_INIT_MODE: always
       SERVER_PORT: 8081 # Must match EXPOSE (in dockerfile) and application.properties
       JWT_SECRET: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+      APPLICATION_SECURITY_JWT_EXPIRATION: 86400000
 
     networks:
       - internal
