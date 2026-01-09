@@ -141,7 +141,7 @@ public class SecurityConfig {
                 .formLogin(form -> form
                         .loginPage("/ui/auth/redis/login")
                         .loginProcessingUrl("/ui/auth/redis/login")
-                        .defaultSuccessUrl("/ui/dashboard")
+                        .defaultSuccessUrl("/ui/auth/redis/dashboard")
                         .failureUrl("/ui/auth/redis/login?error=true")
                         .permitAll()
                 )
