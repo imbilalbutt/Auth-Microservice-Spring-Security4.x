@@ -1,9 +1,5 @@
 package com.imbilalbutt.springauthdev.AuthService;
 
-import com.imbilalbutt.springauthdev.AuthService.AuthenticationRequest;
-import com.imbilalbutt.springauthdev.AuthService.AuthenticationResponse;
-import com.imbilalbutt.springauthdev.AuthService.RegisterRequest;
-import com.imbilalbutt.springauthdev.AuthService.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -15,11 +11,11 @@ import org.springframework.web.bind.annotation.*;
         import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
-@RequestMapping("/ui")
+@RequestMapping("/ui/auth/servlet")
 @RequiredArgsConstructor
-public class UIController {
+public class WebUIServletController {
 
-    private final UserService userService;
+    private final ApiUserService apiUserService;
 
     // Store token in session
     private static final String AUTH_TOKEN = "authToken";
@@ -53,7 +49,7 @@ public class UIController {
         }
 
         try {
-            AuthenticationResponse authResponse = userService.register(registerRequest);
+            AuthenticationResponse authResponse = apiUserService.register(registerRequest);
 
             // Store authentication in session
             response.addHeader("Set-Cookie",
@@ -116,7 +112,7 @@ public class UIController {
         }
 
         try {
-            AuthenticationResponse authResponse = userService.authenticate(authRequest);
+            AuthenticationResponse authResponse = apiUserService.authenticate(authRequest);
 
             // Store token in cookie (HttpOnly for security)
             response.addHeader("Set-Cookie",

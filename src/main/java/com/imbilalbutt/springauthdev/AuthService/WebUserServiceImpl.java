@@ -1,7 +1,6 @@
 package com.imbilalbutt.springauthdev.AuthService;
 
-
-import com.imbilalbutt.springauthdev.Config.JwtService;
+import com.imbilalbutt.springauthdev.Session.Redis.SessionRegistry;
 import com.imbilalbutt.springauthdev.commons.Role;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -16,12 +15,12 @@ import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
-public class UserServiceImpl implements UserService {
+public class WebUserServiceImpl implements WebUserService{
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final SessionRegistry sessionRegistry;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional
@@ -34,11 +33,12 @@ public class UserServiceImpl implements UserService {
         // Create user account
         var user = createUserAccount(request);
 
-        // Generate JWT token
-        var jwtToken = jwtService.generateToken(user);
+        // Generate Session token
+        var sessionId = sessionRegistry.registerSession(user.getEmail());
 
         return AuthenticationResponse.builder()
-                .token(jwtToken)
+                .sessionToken(sessionId)
+                .tokenType("Session")
                 .email(user.getEmail())
                 .firstname(user.getFirstname())
                 .lastname(user.getLastname())
@@ -48,23 +48,24 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
-        // Authenticate user
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getEmail(),
-                        request.getPassword()
-                )
-        );
+            // Authenticate credentials
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getEmail(),
+                            request.getPassword()
+                    )
+            );
 
-        // Get user from repository
-        var user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+            // Get user
+            User user = userRepository.findByEmail(request.getEmail())
+                    .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        // Generate JWT token
-        var jwtToken = jwtService.generateToken(user);
+            // Create session
+            String sessionId = sessionRegistry.registerSession(user.getEmail());
 
         return AuthenticationResponse.builder()
-                .token(jwtToken)
+                .sessionToken(sessionId)
+                .tokenType("Session")
                 .email(user.getEmail())
                 .firstname(user.getFirstname())
                 .lastname(user.getLastname())

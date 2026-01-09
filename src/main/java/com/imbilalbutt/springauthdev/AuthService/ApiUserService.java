@@ -1,7 +1,7 @@
 package com.imbilalbutt.springauthdev.AuthService;
 
 
-public interface UserService {
+public interface ApiUserService {
 
     AuthenticationResponse register(RegisterRequest request);
 

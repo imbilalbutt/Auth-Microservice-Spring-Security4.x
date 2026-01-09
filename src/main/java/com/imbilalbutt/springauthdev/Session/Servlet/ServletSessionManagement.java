@@ -1,4 +1,4 @@
-package com.imbilalbutt.springauthdev.Security;
+package com.imbilalbutt.springauthdev.Session.Servlet;
 
 import jakarta.servlet.SessionCookieConfig;
 import jakarta.servlet.SessionTrackingMode;
@@ -13,7 +13,8 @@ import java.util.Collections;
 
 @Configuration
 @EnableWebMvc
-public class SessionManagement  implements WebMvcConfigurer {
+// Servlet container sessions (HttpSession),(container-managed)
+public class ServletSessionManagement implements WebMvcConfigurer {
 
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {

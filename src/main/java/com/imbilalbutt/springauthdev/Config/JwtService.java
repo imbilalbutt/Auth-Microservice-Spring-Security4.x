@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+// Class to process JWT token and extract User information
 @Service
 public class JwtService {
 
@@ -31,6 +32,23 @@ public class JwtService {
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
+    }
+
+    private Claims extractAllClaims(String token) {
+        return Jwts
+                .parserBuilder()
+                .setSigningKey(getSignInKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+    }
+
+//   In context of JSON web token, a Sign-in key is a secrct that is used to digitally sign JWT.
+//    The sign-in key is used tto create a signature part of JWT, which is used to verify that sender
+//    of JWT is "who" it claims it to be and ensure the message is not changed along the way.
+    private Key getSignInKey() {
+        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
+        return Keys.hmacShaKeyFor(keyBytes);
     }
 
     public String generateToken(UserDetails userDetails) {
@@ -56,8 +74,9 @@ public class JwtService {
                 .compact();
     }
 
+//    Validate token to see if this Token belongs to this userDetails
     public boolean isTokenValid(String token, UserDetails userDetails) {
-        final String username = extractUsername(token);
+        final String username = extractUsername(token); // extract user name from token
         return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
     }
 
@@ -67,19 +86,5 @@ public class JwtService {
 
     private Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
-    }
-
-    private Claims extractAllClaims(String token) {
-        return Jwts
-                .parserBuilder()
-                .setSigningKey(getSignInKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
-    }
-
-    private Key getSignInKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
-        return Keys.hmacShaKeyFor(keyBytes);
     }
 }
