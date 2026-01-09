@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.imbilalbutt</groupId>
     <artifactId>spring-auth-dev</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.0</version>
     <name>spring-auth-dev</name>
     <description>spring-auth-dev</description>
     <url/>
