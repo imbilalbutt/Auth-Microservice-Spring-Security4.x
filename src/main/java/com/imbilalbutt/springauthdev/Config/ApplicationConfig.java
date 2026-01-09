@@ -20,19 +20,20 @@ public class ApplicationConfig {
 
     private final UserRepository userRepository;
 
+//    // 1. Tells Spring Security WHERE to load users from
     @Bean
     public UserDetailsService userDetailsService() {
         return username -> userRepository.findByEmail(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 
+
+    // 3. Tells Spring Security the AUTHENTICATION STRATEGY (username/password)
     @Bean
     public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(userDetailsService());
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(userDetailsService());  // Where to get users
         try {
-            // For newer versions
-//            authProvider.setUserDetailsService(userDetailsService());
-            authProvider.setPasswordEncoder(passwordEncoder());
+            authProvider.setPasswordEncoder(passwordEncoder());  // How to check password
         } catch (NoSuchMethodError e) {
             // For older versions, create with constructor
             authProvider = new DaoAuthenticationProvider(userDetailsService());
@@ -40,11 +41,14 @@ public class ApplicationConfig {
         return authProvider;
     }
 
+    // 4. Creates the AuthenticationManager responsible for authentication
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 
+
+    // 2. Tells Spring Security HOW to encode/verify passwords
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();

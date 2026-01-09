@@ -38,7 +38,7 @@
         </div>
 
         <!-- Registration Form -->
-        <form th:action="@{/ui/register}" th:object="${registerRequest}" method="post">
+        <form th:action="@{/ui/auth/redis/register}" th:object="${registerRequest}" method="post">
             <div class="row mb-3">
                 <div class="col-md-6">
                     <label for="firstname" class="form-label">First Name *</label>
@@ -101,7 +101,7 @@
 
         <div class="text-center mt-4">
             <p>Already have an account?
-                <a th:href="@{/ui/login}" class="text-decoration-none">Sign In</a>
+                <a th:href="@{/ui/auth/redis/login}" class="text-decoration-none">Sign In</a>
             </p>
             <p>
                 <a th:href="@{/ui/}" class="text-decoration-none">

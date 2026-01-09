@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.imbilalbutt</groupId>
     <artifactId>spring-auth-dev</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.0</version>
     <name>spring-auth-dev</name>
     <description>spring-auth-dev</description>
     <url/>
@@ -96,6 +96,15 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.lettuce</groupId>
+            <artifactId>lettuce-core</artifactId>
+        </dependency>
     </dependencies>
 
 
@@ -111,6 +120,9 @@
                             <artifactId>lombok</artifactId>
                         </exclude>
                     </excludes>
+<!--                    To change the final generated file in /target folder, you can uncomment below line but then you also need to change Dockerfile line number 33-->
+<!--                    to this: COPY - -from=builder ./app/target/auth-service.jar ./app.jar-->
+<!--                    <finalName>auth-service</finalName>-->
                 </configuration>
             </plugin>
         </plugins>

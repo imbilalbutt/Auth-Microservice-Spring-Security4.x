@@ -43,7 +43,7 @@
         </div>
 
         <!-- Login Form -->
-        <form th:action="@{/ui/login}" th:object="${authRequest}" method="post">
+        <form th:action="@{/ui/auth/redis/login}" th:object="${authRequest}" method="post">
             <div class="mb-3">
                 <label for="email" class="form-label">Email Address</label>
                 <input type="email" class="form-control" id="email"
@@ -94,7 +94,7 @@
 
         <div class="text-center mt-4">
             <p>Don't have an account?
-                <a th:href="@{/ui/register}" class="text-decoration-none">Sign Up</a>
+                <a th:href="@{/ui/auth/redis/register}" class="text-decoration-none">Sign Up</a>
             </p>
             <p>
                 <a th:href="@{/ui/}" class="text-decoration-none">
