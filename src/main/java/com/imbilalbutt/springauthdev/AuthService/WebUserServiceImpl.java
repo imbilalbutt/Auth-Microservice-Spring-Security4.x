@@ -1,9 +1,14 @@
 package com.imbilalbutt.springauthdev.AuthService;
 
+import com.imbilalbutt.springauthdev.Config.SecurityAuditLogger;
 import com.imbilalbutt.springauthdev.Session.Redis.SessionRegistry;
 import com.imbilalbutt.springauthdev.commons.Role;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -15,26 +20,36 @@ import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class WebUserServiceImpl implements WebUserService{
 
     private final UserRepository userRepository;
     private final AuthenticationManager authenticationManager;
     private final SessionRegistry sessionRegistry;
     private final PasswordEncoder passwordEncoder;
+    private final SecurityAuditLogger auditLogger;
+
+    @Value("${rate.limit.max-login-attempts:5}")
+    private int maxLoginAttempts;
+
+    @Value("${rate.limit.lockout-duration-minutes:30}")
+    private int lockoutDurationMinutes;
 
     @Override
     @Transactional
     public AuthenticationResponse register(RegisterRequest request) {
-        // Check if user already exists
+        log.info("Attempting to register user with email: {}", request.getEmail());
+
         if (userExists(request.getEmail())) {
+            log.warn("Registration failed - user already exists: {}", request.getEmail());
             throw new IllegalArgumentException("User with email " + request.getEmail() + " already exists");
         }
 
-        // Create user account
         var user = createUserAccount(request);
-
-        // Generate Session token
         var sessionId = sessionRegistry.registerSession(user.getEmail());
+
+        auditLogger.logRegistration(user.getEmail());
+        log.info("User registered successfully: {}", request.getEmail());
 
         return AuthenticationResponse.builder()
                 .sessionToken(sessionId)
@@ -48,7 +63,25 @@ public class WebUserServiceImpl implements WebUserService{
 
     @Override
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
-            // Authenticate credentials
+        log.info("Authentication attempt for email: {}", request.getEmail());
+
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> {
+                    auditLogger.logAuthenticationFailure(request.getEmail(), "User not found");
+                    return new UsernameNotFoundException("User not found");
+                });
+
+        if (!user.isEnabled()) {
+            auditLogger.logAuthenticationFailure(request.getEmail(), "Account disabled");
+            throw new BadCredentialsException("Account is disabled");
+        }
+
+        if (!user.isAccountNonLocked()) {
+            auditLogger.logAuthenticationFailure(request.getEmail(), "Account locked");
+            throw new LockedException("Account is locked");
+        }
+
+        try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             request.getEmail(),
@@ -56,12 +89,31 @@ public class WebUserServiceImpl implements WebUserService{
                     )
             );
 
-            // Get user
-            User user = userRepository.findByEmail(request.getEmail())
-                    .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+            userRepository.resetFailedLoginAttempts(user.getId());
+            auditLogger.logAuthenticationSuccess(user.getEmail());
+            log.info("Authentication successful for: {}", request.getEmail());
 
-            // Create session
-            String sessionId = sessionRegistry.registerSession(user.getEmail());
+        } catch (BadCredentialsException e) {
+            user.incrementFailedLoginAttempts();
+            
+            if (user.getFailedLoginAttempts() >= maxLoginAttempts) {
+                LocalDateTime lockedUntil = LocalDateTime.now().plusMinutes(lockoutDurationMinutes);
+                user.setLocked(true);
+                user.setAccountLockedUntil(lockedUntil);
+                userRepository.save(user);
+                auditLogger.logAccountLockout(user.getEmail(), user.getFailedLoginAttempts());
+                log.warn("Account locked due to too many failed attempts: {}", request.getEmail());
+                throw new LockedException("Account locked due to too many failed login attempts");
+            }
+            
+            userRepository.save(user);
+            auditLogger.logAuthenticationFailure(request.getEmail(), "Invalid credentials");
+            log.warn("Authentication failed for: {} (attempt {} of {})", request.getEmail(), 
+                    user.getFailedLoginAttempts(), maxLoginAttempts);
+            throw new BadCredentialsException("Invalid email or password");
+        }
+
+        String sessionId = sessionRegistry.registerSession(user.getEmail());
 
         return AuthenticationResponse.builder()
                 .sessionToken(sessionId)
@@ -85,7 +137,9 @@ public class WebUserServiceImpl implements WebUserService{
                 .enabled(true)
                 .locked(false)
                 .createdDate(LocalDateTime.now())
-                .dateOfBirth(LocalDate.now())  // Add this if it's NOT NULL in DB
+                .dateOfBirth(request.getDateOfBirth())
+                .failedLoginAttempts(0)
+                .emailVerified(false)
                 .build();
 
         return userRepository.save(user);
