@@ -42,50 +42,67 @@ services:
       retries: 5
 
   app:
-    #    image:  # Use pre-built image, comment out build command if you want to use this line
     build:
       context: .
       dockerfile: Dockerfile
     container_name: auth-service
     restart: always
     ports:
-      - "8081:8081" # host:docker_container -> map docker_container port to localhost port
-    #   TODO: Remove both port binding when integrating API gateway such that client cannot access it directly.
+      - "8081:8081"
     depends_on:
       db:
         condition: service_healthy
+      redis-service:
+        condition: service_healthy
     environment:
-      #      db ---> is actually container name
-      #      db ==> container _ name
-      #      db ==> service _ name (++++) service will be used in jdbc url making.
-      #      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/db
-
-      #      each service can reach others by their service name
+      # Spring Profile
+      SPRING_PROFILES_ACTIVE: prod
+      
+      # Database
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/db
       SPRING_DATASOURCE_USERNAME: admin_user
-      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-password}
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
       SPRING_JPA_SHOW_SQL: "false"
       SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.PostgreSQLDialect
-
-      # Redis configuration
+      
+      # Flyway
+      SPRING_FLYWAY_ENABLED: "true"
+      SPRING_FLYWAY_BASELINE_ON_MIGRATE: "true"
+      
+      # Redis
       SPRING_DATA_REDIS_HOST: redis-service
       SPRING_DATA_REDIS_PORT: 6379
       SPRING_SESSION_STORE_TYPE: redis
-
-
-      SPRING_SQL_INIT_MODE: always
-      SERVER_PORT: 8081 # Must match EXPOSE (in dockerfile) and application.properties
-      JWT_SECRET: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
-      APPLICATION_SECURITY_JWT_EXPIRATION: 86400000
-
+      
+      # JWT - MUST be overridden in production
+      JWT_SECRET: ${JWT_SECRET:-404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+      JWT_EXPIRATION: 86400000
+      
+      # Session Security
+      SESSION_COOKIE_SECURE: "false"
+      
+      # Server
+      SERVER_PORT: 8081
+      
+      # Logging
+      LOG_PATH: /app/logs
+      THYMELEAF_CACHE: "true"
+      
+      # Rate Limiting
+      RATE_LIMIT_REQUESTS_PER_MINUTE: "60"
+      RATE_LIMIT_BURST_CAPACITY: "10"
+      RATE_LIMIT_MAX_LOGIN_ATTEMPTS: "5"
+      RATE_LIMIT_LOCKOUT_DURATION_MINUTES: "30"
     networks:
       - internal
+    volumes:
+      - auth-service-logs:/app/logs
 
 volumes:
-
   auth-service-data:
+  auth-service-logs:
 
 networks:
   internal:

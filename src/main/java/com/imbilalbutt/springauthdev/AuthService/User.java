@@ -60,6 +60,18 @@ public class User implements UserDetails, Principal {
     @Enumerated(EnumType.STRING)
     private Role role;
 
+    private Integer failedLoginAttempts;
+
+    private LocalDateTime accountLockedUntil;
+
+    private String emailVerificationToken;
+
+    private boolean emailVerified;
+
+    private String passwordResetToken;
+
+    private LocalDateTime passwordResetTokenExpiry;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority(role.name()));
@@ -108,7 +120,24 @@ public class User implements UserDetails, Principal {
         return firstname + " " + lastname;
     }
 
-//    public Role getRole(){
-//        return Role.USER;
-//    }
+    public void incrementFailedLoginAttempts() {
+        this.failedLoginAttempts = (this.failedLoginAttempts == null ? 0 : this.failedLoginAttempts) + 1;
+    }
+
+    public void resetFailedLoginAttempts() {
+        this.failedLoginAttempts = 0;
+    }
+
+    public boolean checkAccountNotLocked() {
+        if (this.locked) {
+            if (this.accountLockedUntil != null && LocalDateTime.now().isAfter(this.accountLockedUntil)) {
+                this.locked = false;
+                this.accountLockedUntil = null;
+                this.failedLoginAttempts = 0;
+                return true;
+            }
+            return false;
+        }
+        return true;
+    }
 }

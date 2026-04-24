@@ -72,6 +72,7 @@ package com.imbilalbutt.springauthdev.Security;
 
 
 import com.imbilalbutt.springauthdev.Config.JwtAuthenticationFilter;
+import com.imbilalbutt.springauthdev.Config.RateLimitFilter;
 import com.imbilalbutt.springauthdev.Session.Redis.SessionAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -92,6 +93,7 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final SessionAuthenticationFilter sessionFilter;
     private final AuthenticationProvider authenticationProvider;
+    private final RateLimitFilter rateLimitFilter;
 
     @Bean
     @Order(1)
@@ -118,7 +120,7 @@ public class SecurityConfig {
                         .sessionFixation().none()
                 )
                 .authenticationProvider(authenticationProvider)
-                // Order matters: Session filter for web, JWT filter for API
+                .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -131,7 +133,9 @@ public class SecurityConfig {
     public SecurityFilterChain uiSecurityFilterChain(HttpSecurity http) throws Exception {
         http
                 .securityMatcher("/ui/**", "/", "/home", "/login", "/register")
-                .csrf(csrf -> csrf.disable())
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(org.springframework.security.web.csrf.CookieCsrfTokenRepository.withHttpOnlyFalse())
+                )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/ui/auth/**").permitAll()
                         .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
@@ -157,7 +161,7 @@ public class SecurityConfig {
                         .maximumSessions(1)
                 )
                 .authenticationProvider(authenticationProvider)
-                .addFilterBefore(sessionFilter, UsernamePasswordAuthenticationFilter.class); // SecurityContextPersistenceFilter.class
+                .addFilterBefore(sessionFilter, UsernamePasswordAuthenticationFilter.class);
 
 
         return http.build();
