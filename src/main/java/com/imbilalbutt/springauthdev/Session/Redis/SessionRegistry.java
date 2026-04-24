@@ -24,6 +24,13 @@ public class SessionRegistry {
     private static final long SESSION_TIMEOUT_HOURS = 24;
     private static final String SESSION_KEY_PREFIX = "session:";
 
+    /** Default constructor for testing */
+    public SessionRegistry() {
+        this.redisSessionStorage = null;
+        this.redisTemplate = null;
+        this.auditLogger = null;
+    }
+
     public SessionRegistry(RedisTemplate<String, String> redisTemplate, SecurityAuditLogger auditLogger) {
         redisSessionStorage = redisTemplate.opsForValue();
         this.redisTemplate = redisTemplate;
